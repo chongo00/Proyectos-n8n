@@ -1,0 +1,422 @@
+{
+  "name": "mi publicador cristiano",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "seconds"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1600,
+        320
+      ],
+      "id": "037bf76f-3465-441b-b204-3543de8f394e",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a8929e99-1a1a-485d-9844-c25233b195e1",
+              "name": "videoUrl",
+              "value": "=https://www.youtube.com/watch?v={{ $('Buscar Video en YouTube').item.json.id.videoId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1080,
+        60
+      ],
+      "id": "60232ad8-64ba-4093-a929-e77888830259",
+      "name": "Construir las URLs del Video"
+    },
+    {
+      "parameters": {
+        "url": "https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&type=video&q=noticias+cristianas&order=date&key=AIzaSyBkwOWTVe_B3KV8YueHvJtuzMp9B8pV9Ow",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1440,
+        60
+      ],
+      "id": "13cd65e5-e6cf-455d-98d8-256216af5b70",
+      "name": "Buscar Video en YouTube"
+    },
+    {
+      "parameters": {
+        "url": "https://api.unsplash.com/photos/random?query=jesus_christ&client_id=4IAeZg3eZu9l9t9ybUvQYc5ha-6xJAIrom9nfavwNvc",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -440,
+        320
+      ],
+      "id": "dd7b50ae-dec4-4e6f-bc37-86bae3f57cb9",
+      "name": "Buscar Imagen Cristiana"
+    },
+    {
+      "parameters": {
+        "url": "=https://www.googleapis.com/youtube/v3/videos?part=snippet&id={{ $('Buscar Video en YouTube').item.json.id.videoId }}&key=AIzaSyBkwOWTVe_B3KV8YueHvJtuzMp9B8pV9Ow",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1260,
+        60
+      ],
+      "id": "06f0e73d-489b-40c6-a719-e4a801372ea8",
+      "name": "Obtener Detalles del Video"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cb1ac301-c544-4a37-9312-33dea52fcf23",
+              "name": "finalMessage",
+              "value": "={{ $('Basic LLM Chain').item.json.text }}",
+              "type": "string"
+            },
+            {
+              "id": "4f850d66-35de-4187-951d-8bcf1b02b0a5",
+              "name": "imageUrl",
+              "value": "={{ $('Buscar Imagen Cristiana').item.json.urls.regular }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -300,
+        180
+      ],
+      "id": "c4fb1903-89a2-4e8d-874f-c32d704c9907",
+      "name": "Preparar Post Final"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Crea un post para el siguiente video.\n\nDatos del video:\n- Título: {{ $('Obtener Detalles del Video').item.json.items[0].snippet.title }}\n- Descripción: {{ $('Obtener Detalles del Video').item.json.items[0].snippet.description }}\n\nEnlaces para compartir:\n{{ $json.link_chongo }}\n\n\n\nRequisitos del post:\n1. Empieza con 2 o 3 emojis cristianos (ej: 🙏✝️🕊️) tambien pusdes usar los emojis en el mensaje inspirador.\n2. Escribe una frase corta (1-2 líneas) que sea inspiradora y luego un mensaje que diaga algo referente a abrir el enlace de abajo para saber mas \n3. Termina el mensaje incluyendo el enlace con un mensaje arriba atrayendo de alguna forma para que se abra el link de abajo.",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=Eres un asistente de redes sociales enfocado en contenido cristiano inspirador. Tu tarea es crear mensajes cortos y atractivos para compartir. El tono debe ser cercano y personal. Usa hashtags para atraer mas vistas.\n\nIMPORTANTE: Responde únicamente con el texto del post. No incluyas frases introductorias como \"Claro\" o \"Aquí tienes\". Tu respuesta debe empezar directamente con los emojis."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -760,
+        300
+      ],
+      "id": "1d960983-619f-4fd2-b7cb-4b3e899d7df6",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.cuty.io/quick?token=822bdf3696c1d2d0aabb3abd4&url={{ $json.videoUrl }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1300,
+        300
+      ],
+      "id": "6c0ac70e-fa4f-427d-bdf5-fd585326c7c6",
+      "name": "Acortar el Link mio"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "11a5429f-804f-4635-b2de-7a75efe01740",
+              "name": "link_chongo",
+              "value": "={{ $json.short_url }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1100,
+        300
+      ],
+      "id": "b1941e64-194c-4eca-a4fa-4765e10f2979",
+      "name": "set link chongo"
+    },
+    {
+      "parameters": {
+        "operation": "sendPhoto",
+        "chatId": "902774331",
+        "file": "={{$json.imageUrl}}",
+        "additionalFields": {
+          "caption": "={{ $json.finalMessage }}"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -80,
+        100
+      ],
+      "id": "3cbe7cab-9b52-4d89-bb25-6321a2667feb",
+      "name": "Send a photo message1",
+      "webhookId": "10ed578f-d5a1-4e95-b310-6e04e28efb4c",
+      "credentials": {
+        "telegramApi": {
+          "id": "XTmDBDAW0utZ2QVb",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-pro",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -760,
+        460
+      ],
+      "id": "69ad6ce8-a475-48c2-b4a8-21c04e41e39d",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "DGVWWD0awTo3Jxrf",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "chongo00011170428@gmail.com",
+        "subject": "=Nuevo Post: {{ $('Obtener Detalles del Video').item.json.items[0].snippet.title }}",
+        "message": "=<p>   {{ $('Preparar Post Final').item.json.finalMessage.replace(/\\n/g, '<br>') }} </p> <br> <img src=\"{{ $('Preparar Post Final').item.json.imageUrl }}\" alt=\"Imagen del Post\" style=\"max-width: 600px; height: auto;\">",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -100,
+        280
+      ],
+      "id": "9b27039e-d7d9-40b6-8956-98d611895751",
+      "name": "Send a message1",
+      "webhookId": "05143775-a55a-4d3e-8991-aed56a29d849",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "QOqoeFplWD7QRpjb",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -920,
+        300
+      ],
+      "id": "6e920cc6-8263-48f7-8d0d-9e24701c2bc9",
+      "name": "Merge1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Buscar Video en YouTube",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Construir las URLs del Video": {
+      "main": [
+        [
+          {
+            "node": "Acortar el Link mio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Video en YouTube": {
+      "main": [
+        [
+          {
+            "node": "Obtener Detalles del Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Imagen Cristiana": {
+      "main": [
+        [
+          {
+            "node": "Preparar Post Final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obtener Detalles del Video": {
+      "main": [
+        [
+          {
+            "node": "Construir las URLs del Video",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Post Final": {
+      "main": [
+        [
+          {
+            "node": "Send a photo message1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Buscar Imagen Cristiana",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Acortar el Link mio": {
+      "main": [
+        [
+          {
+            "node": "set link chongo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "set link chongo": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "2455ff76-afca-4027-86ac-06fd09073764",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "86e739eea938306b865cd0a570e7d217fc7e4506f43d76afb9a8128192903df2"
+  },
+  "id": "L03LDjjO7BJvdC28",
+  "tags": []
+}
